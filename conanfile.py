@@ -3,13 +3,15 @@ from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
 class libnest2dConan(ConanFile):
     name = "libnest2d"
-    version = "4.10.0"
+    version = "4.11.0"
     license = "LGPL-3.0"
     author = "Ultimaker B.V."
     url = "https://github.com/Ultimaker/libnest2d"
     description = "2D irregular bin packaging and nesting library written in modern C++"
     topics = ("conan", "cura", "prusaslicer", "nesting", "c++", "bin packaging")
     settings = "os", "compiler", "build_type", "arch"
+    revision_mode = "scm"
+    build_policy = "missing"
     exports = "LICENSE.txt"
     options = {
         "shared": [True, False],
@@ -18,8 +20,7 @@ class libnest2dConan(ConanFile):
         "header_only": [True, False],
         "geometries": ["clipper", "boost", "eigen"],
         "optimizer": ["nlopt", "optimlib"],
-        "threading": ["std", "tbb", "omp", "none"],
-        "python_version": "ANY"
+        "threading": ["std", "tbb", "omp", "none"]
     }
     default_options = {
         "shared": True,
@@ -28,8 +29,7 @@ class libnest2dConan(ConanFile):
         "header_only": False,
         "geometries": "clipper",
         "optimizer": "nlopt",
-        "threading": "std",
-        "python_version": "3.9"
+        "threading": "std"
     }
     scm = {
         "type": "git",
@@ -38,41 +38,12 @@ class libnest2dConan(ConanFile):
         "revision": "auto"
     }
 
-    # TODO: Move lib naming logic to python_requires project
-    _ext = None
-
-    @property
-    def ext(self):
-        if self._ext:
-            return self._ext
-        self._ext = "lib" if self.settings.os == "Windows" else "a"
-        if self.options.shared:
-            if self.settings.os == "Windows":
-                self._ext = "dll"
-            elif self.settings.os == "Macos":
-                self._ext = "dylib"
-            else:
-                self._ext = "so"
-        return self._ext
-
-    _lib_name = None
-
-    @property
-    def lib_name(self):
-        if self._lib_name:
-            return self._lib_name
-        ext = "d" if self.settings.build_type == "Debug" else ""
-        ext += "" if self.settings.os == "Windows" else f".{self.ext}"
-        self._lib_name = f"{self.name}_{self.options.geometries}_{self.options.optimizer}{ext}"
-        return self._lib_name
-
     def configure(self):
         if self.options.shared or self.settings.compiler == "Visual Studio":
             del self.options.fPIC
         if self.options.geometries == "clipper":
             self.options["clipper"].shared = self.options.shared
             self.options["boost"].header_only = True
-            self.options["boost"].python_version = self.options.python_version
             self.options["boost"].shared = self.options.shared
         if self.options.optimizer == "nlopt":
             self.options["nlopt"].shared = self.options.shared
@@ -135,16 +106,11 @@ class libnest2dConan(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.includedirs = ["include"]
-        if self.in_local_cache:
-            self.cpp_info.libdirs = ["lib"]
-        else:
+        self.cpp_info.libs = tools.collect_libs(self)
+        if not self.in_local_cache:
             self.cpp_info.libdirs = [f"cmake-build-{self.settings.build_type}".lower()]
-        self.cpp_info.libs = [self.lib_name]
         self.cpp_info.defines.append(f"LIBNEST2D_GEOMETRIES_{self.options.geometries}")
         self.cpp_info.defines.append(f"LIBNEST2D_OPTIMIZERS_{self.options.optimizer}")
         self.cpp_info.defines.append(f"LIBNEST2D_THREADING_{self.options.threading}")
-        self.cpp_info.names["cmake_find_package"] = self.name
-        self.cpp_info.names["cmake_find_package_multi"] = self.name
         if self.settings.os in ["Linux", "FreeBSD", "Macos"]:
             self.cpp_info.system_libs.append("pthread")

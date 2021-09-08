@@ -1,5 +1,4 @@
-import os
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, CMake
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 
 
@@ -10,7 +9,7 @@ class LibNest2DTestConan(ConanFile):
         self.build_requires("cmake/[>=3.16.2]")
 
     def requirements(self):
-        self.requires(f"libnest2d/4.10.0@ultimaker/testing")
+        self.requires(f"libnest2d/4.11.0@ultimaker/testing")
 
     def generate(self):
         cmake = CMakeDeps(self)
