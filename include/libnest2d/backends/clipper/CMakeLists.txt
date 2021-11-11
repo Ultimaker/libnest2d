@@ -1,21 +1,20 @@
 add_library(clipperBackend INTERFACE)
 
-find_package(polyclipping 6.1 QUIET)
-if(NOT TARGET polyclipping::polyclipping)
+find_package(clipper 6.1 QUIET)
+if(NOT TARGET clipper::clipper)
     message(STATUS "Using require_package to obtain Clipper")
     require_package(Clipper 6.1 REQUIRED)
-    add_library(polyclipping::polyclipping INTERFACE IMPORTED)
-    target_link_libraries(polyclipping::polyclipping INTERFACE Clipper::Clipper)
+    add_library(clipper::clipper INTERFACE IMPORTED)
 endif()
-target_link_libraries(clipperBackend INTERFACE polyclipping::polyclipping)
+target_link_libraries(clipperBackend INTERFACE clipper::clipper)
 
 
 # Clipper backend is not enough on its own, it still need some functions
 # from Boost geometry
-require_package(Boost 1.58 REQUIRED)
+require_package(boost 1.58 REQUIRED)
 
-if(TARGET Boost::boost)
-    target_link_libraries(clipperBackend INTERFACE Boost::boost )
+if(TARGET boost::boost)
+    target_link_libraries(clipperBackend INTERFACE boost::boost )
 elseif(Boost_INCLUDE_DIRS_FOUND)
     target_include_directories(clipperBackend INTERFACE $<BUILD_INTERFACE:${Boost_INCLUDE_DIRS}> )
 endif()

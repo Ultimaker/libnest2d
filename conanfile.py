@@ -1,5 +1,13 @@
+from typing import Optional
+
 from conans import ConanFile, tools
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
+from conan.tools.layout import cmake_layout
+from conan.tools.files.packager import AutoPackager
+from conans.model.layout import Folders, Infos
+
+required_conan_version = ">=1.42"
+
 
 class libnest2dConan(ConanFile):
     name = "libnest2d"
@@ -13,6 +21,7 @@ class libnest2dConan(ConanFile):
     revision_mode = "scm"
     build_policy = "missing"
     exports = "LICENSE.txt"
+    exports_sources = "*", "!cmake-build-*", "!tmp", "test_package"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -49,7 +58,6 @@ class libnest2dConan(ConanFile):
             self.options["nlopt"].shared = self.options.shared
 
     def build_requirements(self):
-        self.build_requires("cmake/[>=3.16.2]")
         if self.options.tests:
             self.build_requires("catch2/[>=2.13.6]", force_host_context=True)
 
@@ -65,6 +73,16 @@ class libnest2dConan(ConanFile):
     def validate(self):
         if self.settings.compiler.get_safe("cppstd"):
             tools.check_min_cppstd(self, 17)
+
+    def layout(self):
+        cmake_layout(self)
+        self.cpp.package.libs = tools.collect_libs(self)
+        self.cpp.package.defines = [f"LIBNEST2D_GEOMETRIES_{self.options.geometries}",
+                                    f"LIBNEST2D_OPTIMIZERS_{self.options.optimizer}",
+                                    f"LIBNEST2D_THREADING_{self.options.threading}"]
+        self.cpp.package.system_libs = []
+        if self.settings.os in ["Linux", "FreeBSD", "Macos"]:
+            self.cpp.package.system_libs.append("pthread")
 
     def generate(self):
         cmake = CMakeDeps(self)
@@ -88,29 +106,12 @@ class libnest2dConan(ConanFile):
         tc.variables["LIBNEST2D_THREADING"] = self.options.threading
         tc.generate()
 
-    _cmake = None
-
-    def configure_cmake(self):
-        if self._cmake:
-            return self._cmake
-        self._cmake = CMake(self)
-        self._cmake.configure()
-        return self._cmake
-
     def build(self):
-        cmake = self.configure_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
-
-    def package(self):
-        cmake = self.configure_cmake()
         cmake.install()
 
-    def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
-        if not self.in_local_cache:
-            self.cpp_info.libdirs = [f"cmake-build-{self.settings.build_type}".lower()]
-        self.cpp_info.defines.append(f"LIBNEST2D_GEOMETRIES_{self.options.geometries}")
-        self.cpp_info.defines.append(f"LIBNEST2D_OPTIMIZERS_{self.options.optimizer}")
-        self.cpp_info.defines.append(f"LIBNEST2D_THREADING_{self.options.threading}")
-        if self.settings.os in ["Linux", "FreeBSD", "Macos"]:
-            self.cpp_info.system_libs.append("pthread")
+    def package(self):
+        packager = AutoPackager(self)
+        packager.run()
