@@ -22,13 +22,15 @@ class Nest2DConan(ConanFile):
     package_type = "library"
     implements = ["auto_header_only"]
 
+    python_requires = "npmpackage/[>=1.0.0]"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
         "header_only": [True, False],
         "geometries": ["clipper", "boost"],
         "optimizer": ["nlopt", "optimlib"],
-        "threading": ["std", "tbb", "omp", "none"]
+        "threading": ["std", "tbb", "omp", "none"],
+        "with_js_bindings": [True, False]
     }
     default_options = {
         "shared": True,
@@ -36,7 +38,8 @@ class Nest2DConan(ConanFile):
         "header_only": False,
         "geometries": "clipper",
         "optimizer": "nlopt",
-        "threading": "std"
+        "threading": "std",
+        "with_js_bindings": False
     }
 
     def set_version(self):
@@ -133,6 +136,7 @@ class Nest2DConan(ConanFile):
         tc.variables["GEOMETRIES"] = self.options.geometries
         tc.variables["OPTIMIZER"] = self.options.optimizer
         tc.variables["THREADING"] = self.options.threading
+        tc.variables["WITH_JS_BINDINGS"] = self.options.get_safe("with_js_bindings", False)
 
         tc.generate()
 
@@ -162,3 +166,7 @@ class Nest2DConan(ConanFile):
         self.cpp_info.defines.append(f"LIBNEST2D_THREADING_{self.options.threading}")
         if self.settings.os in ["Linux", "FreeBSD", "Macos"] and self.options.threading == "std":
             self.cpp_info.system_libs.append("pthread")
+
+        # npm package json for Emscripten builds
+        if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
+            self.python_requires["npmpackage"].module.conf_package_json(self)

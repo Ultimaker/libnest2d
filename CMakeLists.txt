@@ -6,6 +6,7 @@ find_package(standardprojectsettings REQUIRED)
 option(BUILD_SHARED_LIBS "Build shared libs instead of static (applies for dependencies as well)" OFF)
 option(HEADER_ONLY "If enabled static library will not be built." ON)
 option(ENABLE_TESTING "Build with Google unittest" OFF)
+option(WITH_JS_BINDINGS "Build JS/WASM bindings for npm package" OFF)
 set(GEOMETRIES clipper CACHE STRING "Geometry backend, available options: 'clipper' (default), 'boost'")
 set(OPTIMIZER nlopt CACHE STRING "Optimization backend, available options: 'nlopt' (default), 'optimlib'")
 set(THREADING std CACHE STRING "Multithreading, available options: 'std' (default), 'tbb', 'omp', 'none'")
@@ -89,34 +90,56 @@ endif()
 target_compile_definitions(project_options INTERFACE LIBNEST2D_THREADING_${THREADING})
 
 set(libnest2d_SRCS
-        src/libnest2d.cpp
-        )
+    src/libnest2d.cpp
+)
+
+if(WITH_JS_BINDINGS OR EMSCRIPTEN)
+    list(APPEND libnest2d_SRCS src/libnest2d_js.cpp)
+endif()
+
 
 if(HEADER_ONLY)
     add_library(nest2d INTERFACE ${libnest2d_HDRS})
     target_link_libraries(nest2d INTERFACE project_options)
     target_include_directories(nest2d
-            INTERFACE
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            )
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
 else()
-    if(BUILD_SHARED_LIBS)
-        add_library(nest2d SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
-        if(WIN32)
-            set_target_properties(nest2d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-        endif()
-    else()
-        add_library(nest2d STATIC ${libnest2d_SRCS} ${libnest2d_HDRS})
-    endif()
-    target_link_libraries(nest2d PUBLIC project_options)
-    target_include_directories(nest2d
+    if(WITH_JS_BINDINGS OR EMSCRIPTEN)
+        add_library(nest2d_js SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
+        target_link_libraries(nest2d_js PUBLIC project_options)
+        target_include_directories(nest2d_js
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
                 $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
             PRIVATE
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-            )
+        )
+        set_target_properties(nest2d_js PROPERTIES OUTPUT_NAME "libnest2d_js")
+        # Emscripten-specific properties for npm packaging
+        if(EMSCRIPTEN)
+            set_target_properties(nest2d_js PROPERTIES SUFFIX ".js")
+        endif()
+    else()
+        if(BUILD_SHARED_LIBS)
+            add_library(nest2d SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
+            if(WIN32)
+                set_target_properties(nest2d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+            endif()
+        else()
+            add_library(nest2d STATIC ${libnest2d_SRCS} ${libnest2d_HDRS})
+        endif()
+        target_link_libraries(nest2d PUBLIC project_options)
+        target_include_directories(nest2d
+            PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+            PRIVATE
+                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+        )
+    endif()
 endif()
 
 if(ENABLE_TESTING)
