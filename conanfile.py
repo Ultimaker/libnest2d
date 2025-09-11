@@ -146,6 +146,10 @@ class Nest2DConan(ConanFile):
         cmake.build()
         cmake.install()
 
+    def deploy(self):
+        copy(self, "nest2d*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+        copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+
     def package(self):
         packager = AutoPackager(self)
         packager.run()
@@ -167,8 +171,6 @@ class Nest2DConan(ConanFile):
         if self.settings.os in ["Linux", "FreeBSD", "Macos"] and self.options.threading == "std":
             self.cpp_info.system_libs.append("pthread")
 
-        self.conf_info.define_path("user.libnest2d:libnest2d",
-                                   os.path.join(self.package_folder, "bin", f"libnest2d"))
         # npm package json for Emscripten builds
         if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
             self.python_requires["npmpackage"].module.conf_package_json(self)
