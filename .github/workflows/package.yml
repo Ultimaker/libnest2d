@@ -1,4 +1,4 @@
-name: conan-package
+name: package
 
 on:
   push:
