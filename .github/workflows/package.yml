@@ -12,7 +12,7 @@ on:
       - 'conandata.yml'
       - 'CMakeLists.txt'
       - 'requirements.txt'
-      - '.github/workflows/conan-package.yml'
+      - 'package.yml'
       - '.github/workflows/requirements*'
     branches:
       - main
