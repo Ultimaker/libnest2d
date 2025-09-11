@@ -28,10 +28,17 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     value_object<NestConfig<>>("NestConfig")
         .field("placer_config", &NestConfig<>::placer_config);
 
-    // Expose _Nester (template, so use default types)
-    class_<_Nester<NfpPlacer, FirstFitSelection>>("Nester")
-        .constructor<>()
-        .function("nest", &_Nester<NfpPlacer, FirstFitSelection>::nest);
+        // Expose nest function from libnest2d
+        function("nest",
+            select_overload<std::size_t(std::vector<Item>::iterator,
+                                        std::vector<Item>::iterator,
+                                        const Box&,
+                                        Coord,
+                                        const NestConfig<NfpPlacer, FirstFitSelection>&,
+                                        NestControl)>(
+                &nest<NfpPlacer, FirstFitSelection, std::vector<Item>::iterator>
+            )
+        );
 
     // Expose StopCriteria as OptimizerConfig
     value_object<opt::StopCriteria>("OptimizerConfig")
@@ -43,7 +50,9 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     // Expose Optimizer (template, so use NloptOptimizer)
     class_<opt::Optimizer<opt::NloptOptimizer>>("Optimizer")
         .constructor<const opt::StopCriteria&>()
-        .function("optimize_min", &opt::Optimizer<opt::NloptOptimizer>::optimize_min<double>);
+        .function("optimize_min",
+            select_overload<opt::Result<double>(std::function<double(opt::Input<double>)>, opt::Input<double>, opt::Bound<double>)>(&opt::Optimizer<opt::NloptOptimizer>::optimize_min<double>)
+        );
 }
 
 #endif // LIBNEST2D_JS_H
