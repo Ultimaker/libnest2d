@@ -25,6 +25,8 @@ on:
 jobs:
   conan-package:
     uses: ultimaker/cura-workflows/.github/workflows/conan-package.yml@main
+    with:
+      platform_wasm: true
     secrets: inherit
 
   npm-package:
