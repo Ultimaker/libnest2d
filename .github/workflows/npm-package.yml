@@ -14,7 +14,7 @@ on:
       - 'CMakeLists.txt'
       - 'tools/**'
       - 'tests/**'
-      - '.github/workflows/package.yml'
+      - 'npm-package.yml'
     branches:
       - main
       - dev
@@ -27,7 +27,7 @@ on:
 
 jobs:
   conan-package:
-    uses: ./.github/workflows/conan-package.yml
+    uses: ultimaker/libnest2d/.github/workflows/conan-package.yml@main
 
   npm-package:
     needs: [ conan-package ]
