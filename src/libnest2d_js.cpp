@@ -51,7 +51,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<opt::Optimizer<opt::NloptOptimizer>>("Optimizer")
         .constructor<const opt::StopCriteria&>()
         .function("optimize_min",
-            select_overload<opt::Result<double>(std::function<double(opt::Input<double>)>, opt::Input<double>, opt::Bound<double>)>(&opt::Optimizer<opt::NloptOptimizer>::optimize_min<double>)
+            optional_override([](opt::Optimizer<opt::NloptOptimizer>& self,
+                                std::function<double(opt::Input<double>)> func,
+                                opt::Input<double> init,
+                                opt::Bound<double> bound) {
+                return self.optimize_min(func, init, bound);
+            })
         );
 }
 
