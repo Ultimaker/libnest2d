@@ -13,7 +13,7 @@ find_package(clipper REQUIRED)
 # Find Boost library (required for boost/geometry.hpp)
 find_package(Boost REQUIRED)
 
-
+find_package(NLopt REQUIRED)
 
 # Include directories
 target_include_directories(libnest2d_js PRIVATE
@@ -21,7 +21,6 @@ target_include_directories(libnest2d_js PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${clipper_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${CMAKE_BINARY_DIR}/_deps/nlopt-src/include
 )
 
 # Link Boost headers
@@ -30,9 +29,12 @@ target_link_libraries(libnest2d_js PRIVATE Boost::headers)
 # Link Clipper library
 target_link_libraries(libnest2d_js PRIVATE clipper)
 
+target_link_libraries(libnest2d_js PRIVATE NLopt::nlopt)
 # Define backend macro for Emscripten
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_GEOMETRIES_clipper)
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_OPTIMIZER_nlopt)
+
+
 
 # Emscripten-specific options (optional, but recommended)
 target_link_options(libnest2d_js
@@ -51,4 +53,3 @@ target_link_options(libnest2d_js
 # $<$<CONFIG:Debug>:SHELL:-g3>
 # $<$<CONFIG:Debug>:SHELL:-gsource-map>
 
-target_link_libraries(libnest2d_js PRIVATE nlopt)
