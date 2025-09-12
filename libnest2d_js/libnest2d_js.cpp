@@ -66,12 +66,9 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         );
 
     // Bind Item<ClipperLib::Polygon>
-    class_<libnest2d::Item<ClipperLib::Polygon>>("PolygonItem")
+    class_<Item>("PolygonItem")
         .constructor<const ClipperLib::Polygon&>()
-        .function("rawShape", &libnest2d::Item<ClipperLib::Polygon>::rawShape);
-
-    // Bind std::optional<Item<ClipperLib::Polygon>>
-    emscripten::optional_override<std::optional<libnest2d::Item<ClipperLib::Polygon>>>("OptionalPolygonItem");
+        .function("rawShape", &Item::rawShape);
 }
 
 #endif // LIBNEST2D_JS_H
