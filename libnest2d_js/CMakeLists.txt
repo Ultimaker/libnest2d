@@ -10,12 +10,19 @@ set_target_properties(libnest2d_js PROPERTIES LINK_FLAGS "--bind")
 # Find Clipper library (required for polyclipping/clipper.hpp)
 find_package(clipper REQUIRED)
 
+# Find Boost library (required for boost/geometry.hpp)
+find_package(Boost REQUIRED)
+
 # Include directories
 target_include_directories(libnest2d_js PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${clipper_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS}
 )
+
+# Link Boost headers
+target_link_libraries(libnest2d_js PRIVATE Boost::headers)
 
 # Link Clipper library
 target_link_libraries(libnest2d_js PRIVATE clipper)
