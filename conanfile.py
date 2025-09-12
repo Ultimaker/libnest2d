@@ -80,9 +80,9 @@ class Nest2DConan(ConanFile):
         self.cpp.package.bindirs = ["bin"]
         self.cpp.package.libs = ["nest2d"]
         if self.settings.os == "Emscripten":
-            self.cpp.build.bin = ["libnest2d.js"]
-            self.cpp.package.bin = ["libnest2d.js"]
-            self.cpp.build.bindirs += ["libnest2d"]
+            self.cpp.build.bin = ["libnest2d_js.js"]
+            self.cpp.package.bin = ["libnest2d_js.js"]
+            self.cpp.build.bindirs += ["libnest2d_js"]
 
         self.cpp.package.includedirs = ["include"]
 
@@ -158,12 +158,12 @@ class Nest2DConan(ConanFile):
         cmake.install()
 
     def deploy(self):
-        copy(self, "libnest2d*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+        copy(self, "libnest2d_js*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
         copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
-        copy(self, pattern="libnest2d*", src=os.path.join(self.build_folder, "liblibnest2d_js"),
-             dst=os.path.join(self.package_folder, "bin"))
+        copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+        copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         packager = AutoPackager(self)
         packager.run()
 
