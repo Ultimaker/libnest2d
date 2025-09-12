@@ -19,6 +19,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("x", &ClipperLib::IntPoint::X)
         .field("y", &ClipperLib::IntPoint::Y);
 
+    register_vector<ClipperLib::IntPoint>("IntPointVector");
     // Expose ClipperLib::Polygon
     value_object<ClipperLib::Polygon>("Polygon")
         .field("contour", &ClipperLib::Polygon::Contour)
