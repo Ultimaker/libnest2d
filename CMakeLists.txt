@@ -94,7 +94,7 @@ set(libnest2d_SRCS
 )
 
 if(WITH_JS_BINDINGS OR EMSCRIPTEN)
-    list(APPEND libnest2d_SRCS src/libnest2d_js.cpp)
+    add_subdirectory(libnest2d_js)
 endif()
 
 
@@ -107,39 +107,22 @@ if(HEADER_ONLY)
             $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 else()
-    if(WITH_JS_BINDINGS OR EMSCRIPTEN)
-        add_library(nest2d_js SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
-        target_link_libraries(nest2d_js PUBLIC project_options)
-        target_include_directories(nest2d_js
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            PRIVATE
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        )
-        set_target_properties(nest2d_js PROPERTIES OUTPUT_NAME "libnest2d_js")
-        # Emscripten-specific properties for npm packaging
-        if(EMSCRIPTEN)
-            set_target_properties(nest2d_js PROPERTIES SUFFIX ".js")
+    if(BUILD_SHARED_LIBS)
+        add_library(nest2d SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
+        if(WIN32)
+            set_target_properties(nest2d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
         endif()
     else()
-        if(BUILD_SHARED_LIBS)
-            add_library(nest2d SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
-            if(WIN32)
-                set_target_properties(nest2d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-            endif()
-        else()
-            add_library(nest2d STATIC ${libnest2d_SRCS} ${libnest2d_HDRS})
-        endif()
-        target_link_libraries(nest2d PUBLIC project_options)
-        target_include_directories(nest2d
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            PRIVATE
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        )
+        add_library(nest2d STATIC ${libnest2d_SRCS} ${libnest2d_HDRS})
     endif()
+    target_link_libraries(nest2d PUBLIC project_options)
+    target_include_directories(nest2d
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PRIVATE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
 endif()
 
 if(ENABLE_TESTING)
