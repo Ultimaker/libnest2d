@@ -69,6 +69,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Item>("PolygonItem")
         .constructor<const ClipperLib::Polygon&>()
         .function("rawShape", &Item::rawShape);
+
+    // Bind Box<ClipperLib::IntPoint>
+    class_<Box>("Box")
+        .constructor<>()
+        .function("minCorner", &Box::minCorner)
+        .function("maxCorner", &Box::maxCorner);
 }
 
 #endif // LIBNEST2D_JS_H
