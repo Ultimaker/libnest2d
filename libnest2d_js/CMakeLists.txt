@@ -1,3 +1,4 @@
+message(STATUS "Building for Emscripten")
 cmake_minimum_required(VERSION 3.10)
 project(libnest2d_js)
 
@@ -12,6 +13,22 @@ target_include_directories(libnest2d_js PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
 )
 
-# Link dependencies if needed
-# target_link_libraries(libnest2d_js <dependencies>)
+# Define backend macro for Emscripten
+target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_GEOMETRIES_clipper)
 
+# Emscripten-specific options (optional, but recommended)
+target_link_options(libnest2d_js
+    PUBLIC
+    "SHELL:-lembind"
+    "SHELL:-sEXPORTED_RUNTIME_METHODS=[FS]"
+    "SHELL:-sENVIRONMENT=web"
+    "SHELL:-sMODULARIZE=1"
+    "SHELL:-sEXPORT_ES6=1"
+    "SHELL:-sWASMFS=1"
+    "SHELL:-sALLOW_MEMORY_GROWTH=1"
+    "SHELL:-sERROR_ON_UNDEFINED_SYMBOLS=0"
+)
+
+# If you want to enable debug options, add them conditionally:
+# $<$<CONFIG:Debug>:SHELL:-g3>
+# $<$<CONFIG:Debug>:SHELL:-gsource-map>
