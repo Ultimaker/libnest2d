@@ -13,8 +13,7 @@ find_package(clipper REQUIRED)
 # Find Boost library (required for boost/geometry.hpp)
 find_package(Boost REQUIRED)
 
-# Find nlopt library (required for NloptOptimizer)
-find_package(nlopt REQUIRED)
+
 
 # Include directories
 target_include_directories(libnest2d_js PRIVATE
@@ -22,7 +21,7 @@ target_include_directories(libnest2d_js PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../src
     ${clipper_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIRS}
-    ${nlopt_INCLUDE_DIRS}
+    ${CMAKE_BINARY_DIR}/_deps/nlopt-src/include
 )
 
 # Link Boost headers
@@ -52,5 +51,4 @@ target_link_options(libnest2d_js
 # $<$<CONFIG:Debug>:SHELL:-g3>
 # $<$<CONFIG:Debug>:SHELL:-gsource-map>
 
-# Link nlopt library
 target_link_libraries(libnest2d_js PRIVATE nlopt)
