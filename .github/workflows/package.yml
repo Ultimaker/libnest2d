@@ -14,6 +14,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/package.yml'
       - '.github/workflows/requirements*'
+      - 'libnest2d_js/**'
     branches:
       - main
       - 'CURA-*'
