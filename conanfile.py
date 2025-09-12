@@ -72,6 +72,8 @@ class Nest2DConan(ConanFile):
         copy(self, "*", path.join(self.recipe_folder, "include"), path.join(self.export_sources_folder, "include"))
         copy(self, "*", path.join(self.recipe_folder, "tests"), path.join(self.export_sources_folder, "tests"))
         copy(self, "*", path.join(self.recipe_folder, "tools"), path.join(self.export_sources_folder, "tools"))
+        copy(self, "*", path.join(self.recipe_folder, "libnest2d_js"),
+             os.path.join(self.export_sources_folder, "libnest2d_js"))
 
     def layout(self):
         cmake_layout(self)
@@ -162,6 +164,8 @@ class Nest2DConan(ConanFile):
         copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
+        copy(self, pattern="libnest2d_js*", src=os.path.join(self.build_folder, "libnest2d_js"),
+             dst=os.path.join(self.package_folder, "bin"))
         copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         packager = AutoPackager(self)
