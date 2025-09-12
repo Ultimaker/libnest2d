@@ -162,6 +162,8 @@ class Nest2DConan(ConanFile):
         copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
+        copy(self, pattern="libnest2d*", src=os.path.join(self.build_folder, "libnest2d_js"),
+             dst=os.path.join(self.package_folder, "bin"))
         packager = AutoPackager(self)
         packager.run()
 
