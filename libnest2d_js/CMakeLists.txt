@@ -4,6 +4,10 @@ project(libnest2d_js)
 
 add_executable(libnest2d_js libnest2d_js.cpp)
 
+if (NOT CMAKE_CXX_PLATFORM_ID STREQUAL "emscripten")
+    use_threads(libnest2d_js)
+endif ()
+
 # Emscripten bindings
 set_target_properties(libnest2d_js PROPERTIES LINK_FLAGS "--bind")
 
@@ -27,14 +31,12 @@ target_include_directories(libnest2d_js PRIVATE
 target_link_libraries(libnest2d_js PRIVATE Boost::headers)
 
 # Link Clipper library
-target_link_libraries(libnest2d_js PRIVATE clipper)
+target_link_libraries(libnest2d_js PRIVATE clipper::clipper)
 
 target_link_libraries(libnest2d_js PRIVATE NLopt::nlopt)
 # Define backend macro for Emscripten
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_GEOMETRIES_clipper)
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_OPTIMIZER_nlopt)
-
-
 
 # Emscripten-specific options (optional, but recommended)
 target_link_options(libnest2d_js
@@ -46,7 +48,11 @@ target_link_options(libnest2d_js
     "SHELL:-sEXPORT_ES6=1"
     "SHELL:-sWASMFS=1"
     "SHELL:-sALLOW_MEMORY_GROWTH=1"
+    "SHELL:-sEXPORT_NAME=libnest2d_js"
     "SHELL:-sERROR_ON_UNDEFINED_SYMBOLS=0"
+    "SHELL:-lembind"
+    "SHELL:--closure 1"
+    "SHELL:--emit-tsd libnest2d_js.d.ts"
 )
 
 # If you want to enable debug options, add them conditionally:
