@@ -158,7 +158,7 @@ class Nest2DConan(ConanFile):
         cmake.install()
 
     def deploy(self):
-        copy(self, "liblibnest2d*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+        copy(self, "libnest2d*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
         copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
