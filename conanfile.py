@@ -73,7 +73,16 @@ class Nest2DConan(ConanFile):
 
     def layout(self):
         cmake_layout(self)
+        self.cpp.build.bin = []
+        self.cpp.build.bindirs = []
+        self.cpp.package.bindirs = ["bin"]
         self.cpp.package.libs = ["nest2d"]
+        if self.settings.os == "Emscripten":
+            self.cpp.build.bin = ["libnest2d.js"]
+            self.cpp.package.bin = ["libnest2d.js"]
+            self.cpp.build.bindirs += ["libnest2d"]
+
+        self.cpp.package.includedirs = ["include"]
 
     def requirements(self):
         if self.options.geometries == "clipper":
