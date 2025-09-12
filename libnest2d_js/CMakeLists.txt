@@ -2,7 +2,7 @@ message(STATUS "Building for Emscripten")
 cmake_minimum_required(VERSION 3.10)
 project(libnest2d_js)
 
-add_library(libnest2d_js STATIC libnest2d_js.cpp)
+add_executable(libnest2d_js libnest2d_js.cpp)
 
 # Emscripten bindings
 set_target_properties(libnest2d_js PROPERTIES LINK_FLAGS "--bind")
