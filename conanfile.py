@@ -15,6 +15,7 @@ required_conan_version = ">=2.7.0"
 
 class Nest2DConan(ConanFile):
     name = "nest2d"
+    author = "UltiMaker"
     description = "2D irregular bin packaging and nesting library written in modern C++"
     topics = ("conan", "cura", "prusaslicer", "nesting", "c++", "bin packaging")
     settings = "os", "compiler", "build_type", "arch"
