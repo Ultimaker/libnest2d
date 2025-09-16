@@ -21,10 +21,10 @@ find_package(NLopt REQUIRED)
 
 # Include directories
 target_include_directories(libnest2d_js PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src
-    ${clipper_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src
+        ${clipper_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS}
 )
 
 # Link Boost headers
@@ -40,19 +40,20 @@ target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_OPTIMIZER_nlopt)
 
 # Emscripten-specific options (optional, but recommended)
 target_link_options(libnest2d_js
-    PUBLIC
-    "SHELL:-lembind"
-    "SHELL:-sEXPORTED_RUNTIME_METHODS=[FS]"
-    "SHELL:-sENVIRONMENT=web"
-    "SHELL:-sMODULARIZE=1"
-    "SHELL:-sEXPORT_ES6=1"
-    "SHELL:-sWASMFS=1"
-    "SHELL:-sALLOW_MEMORY_GROWTH=1"
-    "SHELL:-sEXPORT_NAME=libnest2d_js"
-    "SHELL:-sERROR_ON_UNDEFINED_SYMBOLS=0"
-    "SHELL:-lembind"
-    "SHELL:--closure 1"
-    "SHELL:--emit-tsd libnest2d_js.d.ts"
+        PUBLIC
+        "SHELL:-lembind"
+        "SHELL:-sEXPORTED_RUNTIME_METHODS=[FS]"
+        "SHELL:-sENVIRONMENT=web"
+        "SHELL:-sMODULARIZE=1"
+        "SHELL:-sEXPORT_ES6=1"
+        "SHELL:-sWASMFS=1"
+        "SHELL:-sALLOW_MEMORY_GROWTH=1"
+        "SHELL:-sEXPORT_NAME=libnest2d_js"
+        "SHELL:-sERROR_ON_UNDEFINED_SYMBOLS=0"
+        "SHELL:-lembind"
+        "SHELL:--closure 1"
+        "SHELL:--emit-tsd libnest2d_js.d.ts"
+        "SHELL:-sWASM_BIGINT=1"
 )
 
 # If you want to enable debug options, add them conditionally:
