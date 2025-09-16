@@ -73,7 +73,7 @@ std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-long nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
+size_t nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     unsigned length = jsItems["length"].as<unsigned>();
@@ -93,7 +93,7 @@ long nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, con
     NestConfig<> nestConfig(config);
     
     // Call the nest function
-    long result = nest(items, bin, distance, nestConfig);
+    size_t result = nest(items, bin, distance, nestConfig);
     
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
@@ -123,15 +123,28 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Box>("Box")
         .constructor<Point>()
         .constructor<Point, Point>()
-        .constructor<long, long>()
         .constructor<long, long, Point>()
         .class_function("infinite", &Box::infinite)
+        .class_function("fromDimensions", optional_override([](long width, long height) -> Box {
+            return Box(width, height);
+        }))
         .function("minCorner", select_overload<const Point&() const>(&Box::minCorner))
         .function("maxCorner", select_overload<const Point&() const>(&Box::maxCorner))
         .function("width", &Box::width)
         .function("height", &Box::height)
         .function("area", &Box::area<double>)
         .function("center", select_overload<Point() const>(&Box::center))
+        ;
+
+    // Circle class
+    class_<Circle>("Circle")
+        .constructor<>()
+        .constructor<Point, double>()
+        .function("center", select_overload<const Point&() const>(&Circle::center))
+        .function("setCenter", select_overload<void(const Point&)>(&Circle::center))
+        .function("radius", select_overload<double() const>(&Circle::radius))
+        .function("setRadius", select_overload<void(double)>(&Circle::radius))
+        .function("area", &Circle::area)
         ;
 
     // NfpConfig::Alignment enum
