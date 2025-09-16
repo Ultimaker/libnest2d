@@ -85,7 +85,7 @@ std::vector<Radians> jsArrayToVectorRadians(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-long nestWrapper(const emscripten::val& jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
+long nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     unsigned length = jsItems["length"].as<unsigned>();
@@ -137,9 +137,9 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .class_function("infinite", &Box::infinite)
         .function("minCorner", select_overload<const Point&() const>(&Box::minCorner))
         .function("maxCorner", select_overload<const Point&() const>(&Box::maxCorner))
-        .function("width", select_overload<long() const>(&Box::width))
-        .function("height", select_overload<long() const>(&Box::height))
-        .function("area", select_overload<double() const>(&Box::area))
+        .function("width", &Box::width)
+        .function("height", &Box::height)
+        .function("area", &Box::area<double>)
         .function("center", select_overload<Point() const>(&Box::center))
         ;
 
@@ -232,10 +232,10 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("rightmostTopVertex", &Item::rightmostTopVertex)
         .function("leftmostBottomVertex", &Item::leftmostBottomVertex)
         .function("translate", &Item::translate)
-        .function("translation", select_overload<const Point&() const>(&Item::translation))
+        .function("translation", &Item::translation)
         .function("rotate", &Item::rotate)
-        .function("rotation", select_overload<const Radians&() const>(&Item::rotation))
-        .function("inflation", select_overload<long() const>(&Item::inflation))
+        .function("rotation", &Item::rotation)
+        .function("inflation", &Item::inflation)
         .function("transformedShape", &Item::transformedShape)
         .function("resetTransformation", &Item::resetTransformation)
         .class_function("intersects", &Item::intersects)
