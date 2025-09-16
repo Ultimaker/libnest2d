@@ -32,8 +32,9 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 
-// Define a more specific type for Item arrays
-using ItemArray = Item[];
+// Define a more specific type for Item arrays (JavaScript Array<Item>)
+// Represents: Item[] in JavaScript/TypeScript
+using ItemArray = emscripten::val; // This will be bound as Item[] in TypeScript
 
 // Helper function to convert JavaScript arrays to std::vector<Point>
 std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
@@ -75,21 +76,20 @@ std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-size_t nestWrapper(const ItemArray& jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
-    // Validate that jsItems is actually an array
-    // if (!jsItems.isArray()) {
-    //     throw std::invalid_argument("First parameter must be an array of Items");
-    // }
+size_t nestWrapper(ItemArray& jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
     
-    // // Convert JavaScript array to std::vector<Item>
-    // std::vector<Item> items;
-    // unsigned length = jsItems["length"].as<unsigned>();
-    // items.reserve(length);
+    if (!jsItems.isArray()) {
+        throw std::invalid_argument("First parameter must be an array of Items");
+    }
+    // Convert JavaScript array to std::vector<Item>
+    std::vector<Item> items;
+    auto length = jsItems["length"].as<unsigned>();
+    items.reserve(length);
 
-    // for (unsigned i = 0; i < length; i++) {
-    //     Item item = jsItems[i];
-    //     items.push_back(item);
-    // }
+    for (unsigned i = 0; i < length; i++) {
+        Item item = jsItems[i].as<Item>();
+        items.push_back(item);
+    }
 
     // Pre-process distance
     if (distance <= 0) {
@@ -97,10 +97,15 @@ size_t nestWrapper(const ItemArray& jsItems, const Box& bin, long distance = 1, 
     }
 
     // Create nest config
-    NestConfig<> nestConfig(config);
+    const NestConfig<> nestConfig(config);
 
     // Call the nest function
-    size_t result = nest(jsItems, bin, distance, nestConfig);
+    const size_t result = nest(items, bin, distance, nestConfig);
+    
+    // Copy results back to original JavaScript items
+    for (size_t i = 0; i < items.size() && i < length; ++i) {
+        jsItems.set(i, val(items[i]));
+    }
     
     return result;
 }
