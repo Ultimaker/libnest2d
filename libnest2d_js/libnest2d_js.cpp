@@ -97,10 +97,10 @@ size_t nestWrapper(ItemArray& jsItems, const Box& bin, long distance = 1, const 
     }
 
     // Create nest config
-    const NestConfig<> nestConfig(config);
+    NestConfig<> nestConfig(config);
 
     // Call the nest function
-    const size_t result = nest(items, bin, distance, nestConfig);
+    size_t result = nest(items, bin, distance, nestConfig);
     
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
