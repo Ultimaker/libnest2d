@@ -53,15 +53,6 @@ emscripten::val vectorDoubleToJsArray(const std::vector<double>& vec) {
     return jsArray;
 }
 
-// Helper function to convert std::vector<Radians> to JavaScript array
-emscripten::val vectorRadiansToJsArray(const std::vector<Radians>& vec) {
-    emscripten::val jsArray = emscripten::val::array();
-    for (size_t i = 0; i < vec.size(); ++i) {
-        jsArray.call<void>("push", static_cast<double>(vec[i]));
-    }
-    return jsArray;
-}
-
 // Helper function to convert JavaScript array to std::vector<double>
 std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
     std::vector<double> vec;
@@ -70,19 +61,6 @@ std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
     
     for (unsigned i = 0; i < length; i++) {
         vec.push_back(jsArray[i].as<double>());
-    }
-    
-    return vec;
-}
-
-// Helper function to convert JavaScript array to std::vector<Radians>
-std::vector<Radians> jsArrayToVectorRadians(const emscripten::val& jsArray) {
-    std::vector<Radians> vec;
-    unsigned length = jsArray["length"].as<unsigned>();
-    vec.reserve(length);
-    
-    for (unsigned i = 0; i < length; i++) {
-        vec.push_back(Radians(jsArray[i].as<double>()));
     }
     
     return vec;
@@ -175,12 +153,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("accuracy", &NfpConfig::accuracy)
         .field("explore_holes", &NfpConfig::explore_holes)
         .field("parallel", &NfpConfig::parallel)
-        .field("rotations", emscripten::optional_override(
-            [](const NfpConfig& self) { return vectorRadiansToJsArray(self.rotations); }),
-            emscripten::optional_override(
-                [](NfpConfig& self, const emscripten::val& jsArray) { 
-                    self.rotations = jsArrayToVectorRadians(jsArray); 
-                }));
+        ;
 
     // BottomLeftConfig class
     emscripten::value_object<BottomLeftConfig>("BottomLeftConfig")
