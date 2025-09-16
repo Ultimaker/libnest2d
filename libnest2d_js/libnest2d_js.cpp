@@ -1,13 +1,14 @@
 #ifndef LIBNEST2D_JS_H
 #define LIBNEST2D_JS_H
 //Copyright (c) 2022 Ultimaker B.V.
-//libnest2d_js is released und        .function("setY", optional_override([](Point& self, long value) { setY(self, value); }))r the terms of the LGPLv3 or higher.
+//libnest2d_js is released under the terms of the LGPLv3 or higher.
 
 // Emscripten Embind bindings for libnest2d
 #include <libnest2d/libnest2d.hpp>
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <libnest2d/backends/clipper/geometries.hpp>
+#include <libnest2d/placers/bottomleftplacer.hpp>
 #include <libnest2d/optimizers/nlopt/subplex.hpp>
 
 using namespace emscripten;
@@ -21,7 +22,11 @@ using Circle = _Circle<Point>;
 using Item = _Item<PolygonImpl>;
 using NfpConfig = NfpPConfig<PolygonImpl>;
 using BottomLeftConfig = BLConfig<PolygonImpl>;
-using DJDHeuristicConfig = DJDHeuristic::Config;
+using Polygon = PolygonImpl;
+
+// Add aliases for angle types
+using Radians = libnest2d::Radians;
+using Degrees = libnest2d::Degrees;
 
 // Declare value types for TypeScript generation
 EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
@@ -83,7 +88,7 @@ long nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, con
     if (distance <= 0) {
         distance = 1;
     }
-    
+
     // Create nest config
     NestConfig<> nestConfig(config);
     
@@ -129,17 +134,6 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("center", select_overload<Point() const>(&Box::center))
         ;
 
-    // Circle class
-    class_<Circle>("Circle")
-        .constructor<>()
-        .constructor<Point, double>()
-        .function("center", select_overload<const Point&() const>(&Circle::center))
-        .function("setCenter", select_overload<void(const Point&)>(&Circle::center))
-        .function("radius", select_overload<double() const>(&Circle::radius))
-        .function("setRadius", select_overload<void(double)>(&Circle::radius))
-        .function("area", &Circle::area)
-        ;
-
     // NfpConfig::Alignment enum
     enum_<NfpConfig::Alignment>("Alignment")
         .value("CENTER", NfpConfig::Alignment::CENTER)
@@ -166,16 +160,6 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("allow_rotations", &BottomLeftConfig::allow_rotations)
         ;
 
-    // DJDHeuristicConfig class
-    emscripten::value_object<DJDHeuristicConfig>("DJDHeuristicConfig")
-        .field("try_reverse_order", &DJDHeuristicConfig::try_reverse_order)
-        .field("try_pairs", &DJDHeuristicConfig::try_pairs)
-        .field("try_triplets", &DJDHeuristicConfig::try_triplets)
-        .field("initial_fill_proportion", &DJDHeuristicConfig::initial_fill_proportion)
-        .field("waste_increment", &DJDHeuristicConfig::waste_increment)
-        .field("allow_parallel", &DJDHeuristicConfig::allow_parallel)
-        .field("force_parallel", &DJDHeuristicConfig::force_parallel)
-        ;
 
     // Item class
     class_<Item>("Item")
@@ -192,8 +176,20 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("vertexCount", &Item::vertexCount)
         .function("boundingBox", &Item::boundingBox)
         .function("translate", &Item::translate)
-        .function("rotate", &Item::rotate)
-        ;
+        .function("rotate", &Item::rotate);
+
+    // Polygon class for internal type compatibility
+    class_<Polygon>("Polygon");
+
+    // Radians class for rotation angles
+    class_<Radians>("Radians")
+        .constructor<double>()
+        .function("toDegrees", &Radians::toDegrees);
+
+    // Degrees class for rotation angles  
+    class_<Degrees>("Degrees")
+        .constructor<double>()
+        .function("toRadians", &Degrees::toRadians);
 
     // register_vector for JavaScript array conversion
     register_vector<Item>("VectorItem");
