@@ -10,10 +10,14 @@
 #include <libnest2d/backends/clipper/geometries.hpp>
 #include <libnest2d/optimizers/nlopt/subplex.hpp>
 
-
 using namespace emscripten;
 using namespace libnest2d;
 using namespace placers;
+
+// Type aliases to match Python bindings
+using NfpConfig = NfpPConfig<PolygonImpl>;
+using BottomLeftConfig = BLConfig<PolygonImpl>;
+using DJDHeuristicConfig = DJDHeuristic::Config;
 
 // Declare value types for TypeScript generation
 EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
@@ -123,8 +127,8 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .constructor<long, long>()
         .constructor<long, long, Point>()
         .class_function("infinite", &Box::infinite)
-        .function("minCorner", &Box::minCorner)
-        .function("maxCorner", &Box::maxCorner)
+        .function("minCorner", &Box::minCorner, return_value_policy::reference())
+        .function("maxCorner", &Box::maxCorner, return_value_policy::reference())
         .function("width", &Box::width)
         .function("height", &Box::height)
         .function("area", &Box::area)
@@ -135,8 +139,8 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Circle>("Circle")
         .constructor<>()
         .constructor<Point, double>()
-        .function("center", select_overload<Point()>(&Circle::center))
-        .function("setCenter", select_overload<void(Point)>(&Circle::center))
+        .function("center", select_overload<const Point&()>(&Circle::center))
+        .function("setCenter", select_overload<void(const Point&)>(&Circle::center))
         .function("radius", select_overload<double()>(&Circle::radius))
         .function("setRadius", select_overload<void(double)>(&Circle::radius))
         .function("area", &Circle::area)
@@ -187,9 +191,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     // Item class
     class_<Item>("Item")
         .constructor<>()
+        .constructor<PolygonImpl>()
         .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
-            return new Item(vertices);
+            PolygonImpl polygon;
+            polygon.Contour = vertices;
+            return new Item(polygon);
         }), allow_raw_pointers())
         .function("binId", select_overload<int()>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
