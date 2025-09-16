@@ -40,25 +40,20 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     return vertices;
 }
 
-// Helper function to convert JavaScript arrays to std::vector<Item*>
-std::vector<Item*> jsArrayToItemPtrVector(const emscripten::val& jsArray) {
-    std::vector<Item*> items;
-    unsigned length = jsArray["length"].as<unsigned>();
-    items.reserve(length);
-    
-    for (unsigned i = 0; i < length; i++) {
-        Item* item = jsArray[i].as<Item*>();
-        items.push_back(item);
-    }
-    
-    return items;
-}
-
 // Helper function to convert std::vector<double> to JavaScript array
 emscripten::val vectorDoubleToJsArray(const std::vector<double>& vec) {
     emscripten::val jsArray = emscripten::val::array();
     for (size_t i = 0; i < vec.size(); ++i) {
         jsArray.call<void>("push", vec[i]);
+    }
+    return jsArray;
+}
+
+// Helper function to convert std::vector<Radians> to JavaScript array
+emscripten::val vectorRadiansToJsArray(const std::vector<Radians>& vec) {
+    emscripten::val jsArray = emscripten::val::array();
+    for (size_t i = 0; i < vec.size(); ++i) {
+        jsArray.call<void>("push", static_cast<double>(vec[i]));
     }
     return jsArray;
 }
@@ -76,16 +71,29 @@ std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
     return vec;
 }
 
+// Helper function to convert JavaScript array to std::vector<Radians>
+std::vector<Radians> jsArrayToVectorRadians(const emscripten::val& jsArray) {
+    std::vector<Radians> vec;
+    unsigned length = jsArray["length"].as<unsigned>();
+    vec.reserve(length);
+    
+    for (unsigned i = 0; i < length; i++) {
+        vec.push_back(Radians(jsArray[i].as<double>()));
+    }
+    
+    return vec;
+}
+
 // Wrapper function for nest() to handle JavaScript arrays
 long nestWrapper(const emscripten::val& jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
-    // Convert JavaScript array to std::vector<Item*>
-    std::vector<Item*> itemPtrs = jsArrayToItemPtrVector(jsItems);
-    
-    // Convert to std::vector<Item> for the nest function
+    // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
-    items.reserve(itemPtrs.size());
-    for (Item* item : itemPtrs) {
-        items.push_back(*item);
+    unsigned length = jsItems["length"].as<unsigned>();
+    items.reserve(length);
+    
+    for (unsigned i = 0; i < length; i++) {
+        Item item = jsItems[i].as<Item>();
+        items.push_back(item);
     }
     
     // Pre-process distance
@@ -99,9 +107,9 @@ long nestWrapper(const emscripten::val& jsItems, const Box& bin, long distance =
     // Call the nest function
     long result = nest(items, bin, distance, nestConfig);
     
-    // Copy results back to original items
-    for (size_t i = 0; i < itemPtrs.size(); ++i) {
-        *(itemPtrs[i]) = items[i];
+    // Copy results back to original JavaScript items
+    for (size_t i = 0; i < items.size() && i < length; ++i) {
+        jsItems[i] = items[i];
     }
     
     return result;
@@ -139,9 +147,9 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Circle>("Circle")
         .constructor<>()
         .constructor<Point, double>()
-        .function("center", select_overload<const Point&()>(&Circle::center))
+        .function("center", select_overload<const Point&() const>(&Circle::center))
         .function("setCenter", select_overload<void(const Point&)>(&Circle::center))
-        .function("radius", select_overload<double()>(&Circle::radius))
+        .function("radius", select_overload<double() const>(&Circle::radius))
         .function("setRadius", select_overload<void(double)>(&Circle::radius))
         .function("area", &Circle::area)
         ;
@@ -164,10 +172,10 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("explore_holes", &NfpConfig::explore_holes)
         .field("parallel", &NfpConfig::parallel)
         .field("rotations", emscripten::optional_override(
-            [](const NfpConfig& self) { return vectorDoubleToJsArray(self.rotations); }),
+            [](const NfpConfig& self) { return vectorRadiansToJsArray(self.rotations); }),
             emscripten::optional_override(
                 [](NfpConfig& self, const emscripten::val& jsArray) { 
-                    self.rotations = jsArrayToVectorDouble(jsArray); 
+                    self.rotations = jsArrayToVectorRadians(jsArray); 
                 }));
 
     // BottomLeftConfig class
@@ -192,19 +200,19 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Item>("Item")
         .constructor<>()
         .constructor<PolygonImpl>()
-        .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) {
+        .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item* {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
             PolygonImpl polygon;
             polygon.Contour = vertices;
             return new Item(polygon);
         }), allow_raw_pointers())
-        .function("binId", select_overload<int()>(&Item::binId))
+        .function("binId", select_overload<int() const>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
         .function("isFixed", &Item::isFixed)
         .function("isDisallowedArea", &Item::isDisallowedArea)
         .function("markAsFixedInBin", &Item::markAsFixedInBin)
         .function("markAsDisallowedAreaInBin", &Item::markAsDisallowedAreaInBin)
-        .function("priority", select_overload<int()>(&Item::priority))
+        .function("priority", select_overload<int() const>(&Item::priority))
         .function("setPriority", select_overload<void(int)>(&Item::priority))
         .function("toString", &Item::toString)
         .function("vertex", &Item::vertex)
@@ -215,10 +223,10 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("areHolesConvex", &Item::areHolesConvex)
         .function("vertexCount", &Item::vertexCount)
         .function("holeCount", &Item::holeCount)
-        .function("isInside", select_overload<bool(Point)>(&Item::isInside))
-        .function("isInsideItem", select_overload<bool(Item)>(&Item::isInside))
-        .function("isInsideBox", select_overload<bool(Box)>(&Item::isInside))
-        .function("isInsideCircle", select_overload<bool(Circle)>(&Item::isInside))
+        .function("isInside", select_overload<bool(const Point&) const>(&Item::isInside))
+        .function("isInsideItem", select_overload<bool(const Item&) const>(&Item::isInside))
+        .function("isInsideBox", select_overload<bool(const Box&) const>(&Item::isInside))
+        .function("isInsideCircle", select_overload<bool(const Circle&) const>(&Item::isInside))
         .function("boundingBox", &Item::boundingBox)
         .function("referenceVertex", &Item::referenceVertex)
         .function("rightmostTopVertex", &Item::rightmostTopVertex)
@@ -227,7 +235,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("translation", &Item::translation)
         .function("rotate", &Item::rotate)
         .function("rotation", &Item::rotation)
-        .function("inflation", select_overload<long()>(&Item::inflation))
+        .function("inflation", select_overload<long() const>(&Item::inflation))
         .function("setInflation", select_overload<void(long)>(&Item::inflation))
         .function("transformedShape", &Item::transformedShape)
         .function("resetTransformation", &Item::resetTransformation)
