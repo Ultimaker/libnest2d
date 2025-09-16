@@ -15,6 +15,10 @@ using namespace libnest2d;
 using namespace placers;
 
 // Type aliases to match Python bindings
+using Point = PointImpl;
+using Box = _Box<Point>;
+using Circle = _Circle<Point>;
+using Item = _Item<PolygonImpl>;
 using NfpConfig = NfpPConfig<PolygonImpl>;
 using BottomLeftConfig = BLConfig<PolygonImpl>;
 using DJDHeuristicConfig = DJDHeuristic::Config;
@@ -198,7 +202,6 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
 
     // Item class
     class_<Item>("Item")
-        .constructor<>()
         .constructor<const PolygonImpl&>()
         .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item* {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
