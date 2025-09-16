@@ -32,12 +32,15 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 
+// Define a more specific type for Item arrays
+using ItemArray = Item[];
+
 // Helper function to convert JavaScript arrays to std::vector<Point>
 std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     std::vector<Point> vertices;
     unsigned length = jsArray["length"].as<unsigned>();
     vertices.reserve(length);
-    
+
     for (unsigned i = 0; i < length; i++) {
         emscripten::val jsPoint = jsArray[i];
         // Use property access instead of method calls for better compatibility
@@ -45,7 +48,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
         long y = jsPoint["y"].as<long>();
         vertices.emplace_back(x, y);
     }
-    
+
     return vertices;
 }
 
@@ -63,26 +66,31 @@ std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
     std::vector<double> vec;
     unsigned length = jsArray["length"].as<unsigned>();
     vec.reserve(length);
-    
+
     for (unsigned i = 0; i < length; i++) {
         vec.push_back(jsArray[i].as<double>());
     }
-    
+
     return vec;
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-size_t nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
-    // Convert JavaScript array to std::vector<Item>
-    std::vector<Item> items;
-    unsigned length = jsItems["length"].as<unsigned>();
-    items.reserve(length);
+size_t nestWrapper(const ItemArray& jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
+    // Validate that jsItems is actually an array
+    // if (!jsItems.isArray()) {
+    //     throw std::invalid_argument("First parameter must be an array of Items");
+    // }
     
-    for (unsigned i = 0; i < length; i++) {
-        Item item = jsItems[i].as<Item>();
-        items.push_back(item);
-    }
-    
+    // // Convert JavaScript array to std::vector<Item>
+    // std::vector<Item> items;
+    // unsigned length = jsItems["length"].as<unsigned>();
+    // items.reserve(length);
+
+    // for (unsigned i = 0; i < length; i++) {
+    //     Item item = jsItems[i];
+    //     items.push_back(item);
+    // }
+
     // Pre-process distance
     if (distance <= 0) {
         distance = 1;
@@ -90,14 +98,9 @@ size_t nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, c
 
     // Create nest config
     NestConfig<> nestConfig(config);
-    
+
     // Call the nest function
-    size_t result = nest(items, bin, distance, nestConfig);
-    
-    // Copy results back to original JavaScript items
-    for (size_t i = 0; i < items.size() && i < length; ++i) {
-        jsItems.set(i, val(items[i]));
-    }
+    size_t result = nest(jsItems, bin, distance, nestConfig);
     
     return result;
 }
