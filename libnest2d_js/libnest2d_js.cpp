@@ -199,7 +199,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     // Item class
     class_<Item>("Item")
         .constructor<>()
-        .constructor<PolygonImpl>()
+        .constructor<const PolygonImpl&>()
         .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item* {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
             PolygonImpl polygon;
@@ -232,10 +232,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("rightmostTopVertex", &Item::rightmostTopVertex)
         .function("leftmostBottomVertex", &Item::leftmostBottomVertex)
         .function("translate", &Item::translate)
-        .function("translation", &Item::translation)
         .function("rotate", &Item::rotate)
-        .function("rotation", &Item::rotation)
-        .function("inflation", &Item::inflation)
         .function("transformedShape", &Item::transformedShape)
         .function("resetTransformation", &Item::resetTransformation)
         .class_function("intersects", &Item::intersects)
