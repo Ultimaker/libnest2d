@@ -109,7 +109,7 @@ long nestWrapper(const emscripten::val& jsItems, const Box& bin, long distance =
     
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
-        jsItems[i] = items[i];
+        jsItems.set(i, val(items[i]));
     }
     
     return result;
@@ -135,12 +135,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .constructor<long, long>()
         .constructor<long, long, Point>()
         .class_function("infinite", &Box::infinite)
-        .function("minCorner", &Box::minCorner, return_value_policy::reference())
-        .function("maxCorner", &Box::maxCorner, return_value_policy::reference())
-        .function("width", &Box::width)
-        .function("height", &Box::height)
-        .function("area", &Box::area)
-        .function("center", &Box::center)
+        .function("minCorner", select_overload<const Point&() const>(&Box::minCorner))
+        .function("maxCorner", select_overload<const Point&() const>(&Box::maxCorner))
+        .function("width", select_overload<long() const>(&Box::width))
+        .function("height", select_overload<long() const>(&Box::height))
+        .function("area", select_overload<double() const>(&Box::area))
+        .function("center", select_overload<Point() const>(&Box::center))
         ;
 
     // Circle class
@@ -232,11 +232,10 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("rightmostTopVertex", &Item::rightmostTopVertex)
         .function("leftmostBottomVertex", &Item::leftmostBottomVertex)
         .function("translate", &Item::translate)
-        .function("translation", &Item::translation)
+        .function("translation", select_overload<const Point&() const>(&Item::translation))
         .function("rotate", &Item::rotate)
-        .function("rotation", &Item::rotation)
+        .function("rotation", select_overload<const Radians&() const>(&Item::rotation))
         .function("inflation", select_overload<long() const>(&Item::inflation))
-        .function("setInflation", select_overload<void(long)>(&Item::inflation))
         .function("transformedShape", &Item::transformedShape)
         .function("resetTransformation", &Item::resetTransformation)
         .class_function("intersects", &Item::intersects)
