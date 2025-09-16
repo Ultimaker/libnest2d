@@ -1,7 +1,7 @@
 #ifndef LIBNEST2D_JS_H
 #define LIBNEST2D_JS_H
 //Copyright (c) 2022 Ultimaker B.V.
-//libnest2d_js is released under the terms of the LGPLv3 or higher.
+//libnest2d_js is released und        .function("setY", optional_override([](Point& self, long value) { setY(self, value); }))r the terms of the LGPLv3 or higher.
 
 // Emscripten Embind bindings for libnest2d
 #include <libnest2d/libnest2d.hpp>
@@ -36,8 +36,9 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     
     for (unsigned i = 0; i < length; i++) {
         emscripten::val jsPoint = jsArray[i];
-        long x = jsPoint.call<long>("x");
-        long y = jsPoint.call<long>("y");
+        // Use property access instead of method calls for better compatibility
+        long x = jsPoint["x"].as<long>();
+        long y = jsPoint["y"].as<long>();
         vertices.emplace_back(x, y);
     }
     
@@ -103,12 +104,15 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     emscripten::register_type<ItemList>("Item[]");
     emscripten::register_type<DoubleList>("number[]");
 
-    // Point class
-    emscripten::value_object<Point>("Point")
-        .field("x", emscripten::optional_override([](const Point& self) { return self.X; }),
-               emscripten::optional_override([](Point& self, long value) { self.X = value; }))
-        .field("y", emscripten::optional_override([](const Point& self) { return self.Y; }),
-               emscripten::optional_override([](Point& self, long value) { self.Y = value; }));
+    // Point class - fix the getter/setter type issue
+    class_<Point>("Point")
+        .constructor<>()
+        .constructor<long, long>()
+        .function("x", optional_override([](const Point& self) -> long { return getX(self); }))
+        .function("y", optional_override([](const Point& self) -> long { return getY(self); }))
+        .function("setX", optional_override([](Point& self, long value) { setX(self, value); }))
+        .function("setY", optional_override([](Point& self, long value) { setY(self, value); }))
+        ;
 
     // Box class
     class_<Box>("Box")
@@ -184,43 +188,11 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         }), allow_raw_pointers())
         .function("binId", select_overload<int() const>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
-        .function("isFixed", &Item::isFixed)
-        .function("isDisallowedArea", &Item::isDisallowedArea)
-        .function("markAsFixedInBin", &Item::markAsFixedInBin)
-        .function("markAsDisallowedAreaInBin", &Item::markAsDisallowedAreaInBin)
-        .function("priority", select_overload<int() const>(&Item::priority))
-        .function("setPriority", select_overload<void(int)>(&Item::priority))
-        .function("toString", &Item::toString)
-        .function("vertex", &Item::vertex)
-        .function("setVertex", &Item::setVertex)
         .function("area", &Item::area)
-        .function("isContourConvex", &Item::isContourConvex)
-        .function("isHoleConvex", &Item::isHoleConvex)
-        .function("areHolesConvex", &Item::areHolesConvex)
         .function("vertexCount", &Item::vertexCount)
-        .function("holeCount", &Item::holeCount)
-        .function("isInside", select_overload<bool(const Point&) const>(&Item::isInside))
-        .function("isInsideItem", select_overload<bool(const Item&) const>(&Item::isInside))
-        .function("isInsideBox", select_overload<bool(const Box&) const>(&Item::isInside))
-        .function("isInsideCircle", select_overload<bool(const Circle&) const>(&Item::isInside))
         .function("boundingBox", &Item::boundingBox)
-        .function("referenceVertex", &Item::referenceVertex)
-        .function("rightmostTopVertex", &Item::rightmostTopVertex)
-        .function("leftmostBottomVertex", &Item::leftmostBottomVertex)
         .function("translate", &Item::translate)
         .function("rotate", &Item::rotate)
-        .function("transformedShape", &Item::transformedShape)
-        .function("resetTransformation", &Item::resetTransformation)
-        .class_function("intersects", &Item::intersects)
-        .class_function("touches", &Item::touches)
-        ;
-
-    // Rectangle class (inherits from Item)
-    class_<Rectangle, base<Item>>("Rectangle")
-        .constructor<long, long>()
-        .function("width", &Rectangle::width)
-        .function("height", &Rectangle::height)
-        // Inherited methods from Item are automatically available
         ;
 
     // register_vector for JavaScript array conversion
