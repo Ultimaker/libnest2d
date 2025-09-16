@@ -21,7 +21,6 @@ using Box = _Box<Point>;
 using Circle = _Circle<Point>;
 using Item = _Item<PolygonImpl>;
 using NfpConfig = NfpPConfig<PolygonImpl>;
-using BottomLeftConfig = BLConfig<PolygonImpl>;
 using Polygon = PolygonImpl;
 
 // Add aliases for angle types
@@ -166,13 +165,6 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("parallel", &NfpConfig::parallel)
         ;
 
-    // BottomLeftConfig class
-    emscripten::value_object<BottomLeftConfig>("BottomLeftConfig")
-        .field("min_obj_distance", &BottomLeftConfig::min_obj_distance)
-        .field("epsilon", &BottomLeftConfig::epsilon)
-        .field("allow_rotations", &BottomLeftConfig::allow_rotations)
-        ;
-
 
     // Item class
     class_<Item>("Item")
@@ -189,7 +181,13 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("vertexCount", &Item::vertexCount)
         .function("boundingBox", &Item::boundingBox)
         .function("translate", &Item::translate)
-        .function("rotate", &Item::rotate);
+        .function("rotate", &Item::rotate)
+        .function("isFixed", &Item::isFixed)
+        .function("isDisallowedArea", &Item::isDisallowedArea)
+        .function("markAsFixedInBin", &Item::markAsFixedInBin)
+        .function("markAsDisallowedAreaInBin", &Item::markAsDisallowedAreaInBin)
+        .function("priority", select_overload<int() const>(&Item::priority))
+        .function("setPriority", select_overload<void(int)>(&Item::priority));
 
     // Polygon class for internal type compatibility
     class_<Polygon>("Polygon");
