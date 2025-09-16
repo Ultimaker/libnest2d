@@ -53,7 +53,6 @@ target_link_options(libnest2d_js
     "SHELL:-lembind"
     "SHELL:--closure 1"
     "SHELL:--emit-tsd libnest2d_js.d.ts"
-    "SHELL:-sGENERATE_SOURCE_MAP=1"
 )
 
 # If you want to enable debug options, add them conditionally:
