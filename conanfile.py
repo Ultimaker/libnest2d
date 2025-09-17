@@ -168,6 +168,7 @@ class Nest2DConan(ConanFile):
              dst=os.path.join(self.package_folder, "bin"))
         copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+        copy(self, f"*.wasm", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         packager = AutoPackager(self)
         packager.run()
 
