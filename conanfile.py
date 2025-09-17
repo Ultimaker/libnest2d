@@ -164,16 +164,13 @@ class Nest2DConan(ConanFile):
         copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
+        copy(self, pattern="libnest2d_js*", src=os.path.join(self.build_folder, "libnest2d_js"),
+             dst=os.path.join(self.package_folder, "bin"))
+        copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+        copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+        copy(self, f"*.wasm", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         packager = AutoPackager(self)
         packager.run()
-
-        # Specifically handle the Emscripten assets
-        if self.settings.os == "Emscripten":
-            bin_dir = os.path.join(self.package_folder, "bin")
-            build_dir = self.build_folder
-            copy(self, "libnest2d_js.js", build_dir, bin_dir)
-            copy(self, "libnest2d_js.wasm", build_dir, bin_dir)
-            copy(self, "*.d.ts", build_dir, bin_dir, keep_path=False)
 
         # Remove the header files from options not used in this package
         if self.options.geometries != "clipper":
@@ -195,3 +192,6 @@ class Nest2DConan(ConanFile):
         # npm package json for Emscripten builds
         if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
             self.python_requires["npmpackage"].module.conf_package_json(self)
+            # Expose the path to the JS/WASM assets for consumers
+            js_asset_path = os.path.join(self.package_folder, "bin")
+            self.conf_info.define("user.nest2d:js_path", js_asset_path)
