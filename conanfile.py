@@ -121,8 +121,6 @@ class Nest2DConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if self.settings.os == "Emscripten":
-            self.options.threading = "std" # Default to a supported option
 
     def configure(self):
         if self.options.shared:
@@ -197,6 +195,3 @@ class Nest2DConan(ConanFile):
         # npm package json for Emscripten builds
         if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
             self.python_requires["npmpackage"].module.conf_package_json(self)
-            # Expose the path to the JS/WASM assets for consumers
-            js_asset_path = os.path.join(self.package_folder, "bin")
-            self.conf_info.define("user.nest2d:js_path", js_asset_path)
