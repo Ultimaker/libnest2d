@@ -9,7 +9,6 @@
 #include <emscripten/val.h>
 #include <libnest2d/backends/clipper/geometries.hpp>
 #include <libnest2d/placers/bottomleftplacer.hpp>
-#include <libnest2d/optimizers/nlopt/subplex.hpp>
 
 using namespace emscripten;
 using namespace libnest2d;
@@ -32,6 +31,23 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 
+// Helper function to convert a Point to a JavaScript object
+// Helper function to convert a Point to a JavaScript object
+emscripten::val pointToJSObject(const Point& point) {
+    emscripten::val obj = emscripten::val::object();
+    obj.set("x", getX(point));
+    obj.set("y", getY(point));
+    return obj;
+}
+
+// Helper function to convert a vector of Points to a JavaScript array
+emscripten::val pointVectorToJSArray(const std::vector<Point>& points) {
+    emscripten::val jsArray = emscripten::val::array();
+    for (size_t i = 0; i < points.size(); ++i) {
+        jsArray.set(i, pointToJSObject(points[i]));
+    }
+    return jsArray;
+}
 // Helper function to convert JavaScript arrays to std::vector<Point>
 std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     std::vector<Point> vertices;
@@ -69,7 +85,7 @@ size_t nestWrapper(ItemList jsItems, const Box& bin, long distance = 1, const Nf
     NestConfig<> nestConfig(config);
 
     // Call the nest function
-    size_t result = nest(items, bin, distance, nestConfig);
+    size_t result = nest(items, bin);
 
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
@@ -164,7 +180,11 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("markAsFixedInBin", &Item::markAsFixedInBin)
         .function("markAsDisallowedAreaInBin", &Item::markAsDisallowedAreaInBin)
         .function("priority", select_overload<int() const>(&Item::priority))
-        .function("setPriority", select_overload<void(int)>(&Item::priority));
+        .function("setPriority", select_overload<void(int)>(&Item::priority))
+        .function("transformedShape", optional_override([](const Item& self) {
+            const auto& poly = self.transformedShape();
+            return pointVectorToJSArray(poly.Contour);
+        }));
 
     // Polygon class for internal type compatibility
     class_<Polygon>("Polygon");
