@@ -49,31 +49,8 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     return vertices;
 }
 
-// Helper function to convert std::vector<double> to JavaScript array
-emscripten::val vectorDoubleToJsArray(const std::vector<double>& vec) {
-    emscripten::val jsArray = emscripten::val::array();
-    for (size_t i = 0; i < vec.size(); ++i) {
-        jsArray.call<void>("push", vec[i]);
-    }
-    return jsArray;
-}
-
-// Helper function to convert JavaScript array to std::vector<double>
-std::vector<double> jsArrayToVectorDouble(const emscripten::val& jsArray) {
-    std::vector<double> vec;
-    unsigned length = jsArray["length"].as<unsigned>();
-    vec.reserve(length);
-
-    for (unsigned i = 0; i < length; i++) {
-        vec.push_back(jsArray[i].as<double>());
-    }
-
-    return vec;
-}
-
 // Wrapper function for nest() to handle JavaScript arrays
-// Wrapper function for nest() to handle JavaScript arrays
-size_t nestWrapper(emscripten::val jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
+size_t nestWrapper(ItemList jsItems, const Box& bin, long distance = 1, const NfpConfig& config = NfpConfig()) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     auto length = jsItems["length"].as<unsigned>();
