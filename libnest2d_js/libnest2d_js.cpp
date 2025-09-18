@@ -35,8 +35,8 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 // Helper function to convert a Point to a JavaScript object
 emscripten::val pointToJSObject(const Point& point) {
     emscripten::val obj = emscripten::val::object();
-    obj.set("x", getX(point));
-    obj.set("y", getY(point));
+    obj.set("x", long{ static_cast<long>(getX(point)) } );
+    obj.set("y", long{ static_cast<long>(getY(point)) } );
     return obj;
 }
 
@@ -167,6 +167,8 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("boundingBox", &Item::boundingBox)
         .function("translate", &Item::translate)
         .function("rotate", &Item::rotate)
+        .function("rotation", optional_override([](const Item& self) { return self.rotation(); }))
+        .function("translation", optional_override([](const Item& self) { return self.translation(); }))
         .function("isFixed", &Item::isFixed)
         .function("isDisallowedArea", &Item::isDisallowedArea)
         .function("markAsFixedInBin", &Item::markAsFixedInBin)
