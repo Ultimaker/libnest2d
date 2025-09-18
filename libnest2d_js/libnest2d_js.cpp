@@ -30,8 +30,8 @@ using Degrees = libnest2d::Degrees;
 EMSCRIPTEN_DECLARE_VAL_TYPE(PointList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
+EMSCRIPTEN_DECLARE_VAL_TYPE(ResultAndItem);
 
-// Helper function to convert a Point to a JavaScript object
 // Helper function to convert a Point to a JavaScript object
 emscripten::val pointToJSObject(const Point& point) {
     emscripten::val obj = emscripten::val::object();
@@ -40,6 +40,12 @@ emscripten::val pointToJSObject(const Point& point) {
     return obj;
 }
 
+ResultAndItem resultAndItems(const size_t result, const ItemList& items) {
+    emscripten::val obj = emscripten::val::object();
+    obj.set("result", result);
+    obj.set("items", items);
+    return ResultAndItem { obj };
+}
 // Helper function to convert a vector of Points to a JavaScript array
 emscripten::val pointVectorToJSArray(const std::vector<Point>& points) {
     emscripten::val jsArray = emscripten::val::array();
@@ -66,7 +72,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-size_t nestWrapper(ItemList& jsItems, const Box& bin) {
+ResultAndItem nestWrapper(ItemList jsItems, const Box& bin) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     auto length = jsItems["length"].as<unsigned>();
@@ -84,7 +90,7 @@ size_t nestWrapper(ItemList& jsItems, const Box& bin) {
         jsItems.set(i, val(items[i]));
     }
 
-    return result;
+    return resultAndItems(result, jsItems);
 }
 
 EMSCRIPTEN_BINDINGS(libnest2d_js) {
@@ -92,6 +98,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     emscripten::register_type<PointList>("Point[]");
     emscripten::register_type<ItemList>("Item[]");
     emscripten::register_type<DoubleList>("number[]");
+    emscripten::register_type<ResultAndItem>("{ result: number, items: Item[] }");
 
     // Point class - fix the getter/setter type issue
     class_<Point>("Point")
