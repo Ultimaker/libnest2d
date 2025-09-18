@@ -34,6 +34,8 @@ target_link_libraries(libnest2d_js PRIVATE Boost::headers)
 target_link_libraries(libnest2d_js PRIVATE clipper::clipper)
 
 target_link_libraries(libnest2d_js PRIVATE NLopt::nlopt)
+
+target_link_libraries(libnest2d_js PUBLIC spdlog::spdlog)
 # Define backend macro for Emscripten
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_GEOMETRIES_clipper)
 target_compile_definitions(libnest2d_js PRIVATE LIBNEST2D_OPTIMIZER_nlopt)
@@ -51,7 +53,7 @@ target_link_options(libnest2d_js
         "SHELL:-s ERROR_ON_UNDEFINED_SYMBOLS=0"
         "SHELL:--bind"
         "SHELL:-l embind"
-        "SHELL: --embind-emit-tsd libnest2d_js.d.ts"
+        "SHELL: --emit-tsd libnest2d_js.d.ts"
         "SHELL:-sWASM_BIGINT=1"
 )
 

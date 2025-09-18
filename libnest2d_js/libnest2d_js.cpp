@@ -161,12 +161,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     // Item class
     class_<Item>("Item")
         .constructor<const PolygonImpl&>()
-        .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item* {
+        .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
             PolygonImpl polygon;
             polygon.Contour = vertices;
-            return new Item(polygon);
-        }), allow_raw_pointers())
+            return Item(polygon);
+        }))
         .function("binId", select_overload<int() const>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
         .function("area", &Item::area)
@@ -186,6 +186,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
             const auto& poly = self.transformedShape();
             return pointVectorToJSArray(poly.Contour);
         }));
+
 
     // Polygon class for internal type compatibility
     class_<Polygon>("Polygon");

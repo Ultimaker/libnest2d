@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 cmake_policy(SET CMP0091 NEW)
 project(libnest2d)
 find_package(standardprojectsettings REQUIRED)
+find_package(spdlog REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build shared libs instead of static (applies for dependencies as well)" OFF)
 option(HEADER_ONLY "If enabled static library will not be built." ON)
@@ -55,7 +56,7 @@ target_compile_definitions(project_options INTERFACE LIBNEST2D_GEOMETRIES_${GEOM
 
 if("${OPTIMIZER}" STREQUAL "nlopt")
     find_package(NLopt REQUIRED)
-    target_link_libraries(project_options INTERFACE NLopt::nlopt)
+    target_link_libraries(project_options INTERFACE NLopt::nlopt spdlog::spdlog)
     list(APPEND nest2d_HDRS
             include/libnest2d/optimizers/nlopt/simplex.hpp
             include/libnest2d/optimizers/nlopt/subplex.hpp

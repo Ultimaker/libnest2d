@@ -89,6 +89,7 @@ class Nest2DConan(ConanFile):
         self.cpp.package.includedirs = ["include"]
 
     def requirements(self):
+        self.requires("spdlog/[>=1.14.1]", transitive_headers=True)
         if self.options.geometries == "clipper":
             self.requires("clipper/6.4.2@ultimaker/stable", transitive_headers=True)
         if self.options.geometries == "boost" or self.options.geometries == "clipper":
