@@ -32,6 +32,39 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ResultAndItem);
 
+void testFunction() {
+    std::vector<Item> input;
+
+    auto volume = libnest2d::Box(1000, 1000);
+
+    std::vector<Item> items;
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(5, 10),
+                                               Point(10, 10),
+                                               Point(0, 0)
+                                       }));
+    auto& long_thin_triangle = items.back();
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(0, 10),
+                                               Point(10, 10),
+                                               Point(10, 0),
+                                               Point(0, 0),
+                                       }));
+    auto& square = items.back();
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(5, 10),
+                                               Point(10, 0),
+                                               Point(0, 0)
+                                       }));
+    auto& equilateral_triangle = items.back();
+
+    auto num_bins = libnest2d::nest(items, volume);
+    std::cout << "Number of bins used: " << num_bins << std::endl;
+}
+
 // Helper function to convert a Point to a JavaScript object
 emscripten::val pointToJSObject(const Point& point) {
     emscripten::val obj = emscripten::val::object();
@@ -72,7 +105,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-ResultAndItem nestWrapper(ItemList jsItems, const Box& bin) {
+ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     auto length = jsItems["length"].as<unsigned>();
@@ -85,12 +118,13 @@ ResultAndItem nestWrapper(ItemList jsItems, const Box& bin) {
 
     size_t result = nest(items, bin);
 
+    emscripten::val jsItemsResult = emscripten::val::array();
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
-        jsItems.set(i, val(items[i]));
+        jsItemsResult.set(i, items[i]);
     }
 
-    return resultAndItems(result, jsItems);
+    return resultAndItems(result, ItemList(jsItemsResult));
 }
 
 EMSCRIPTEN_BINDINGS(libnest2d_js) {
@@ -208,6 +242,8 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
 
     // Main nest function
     function("nest", &nestWrapper);
+
+    function("testFunction", &testFunction);
 }
 
 #endif // LIBNEST2D_JS_H
