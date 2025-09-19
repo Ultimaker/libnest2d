@@ -35,6 +35,39 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ResultAndItem);
 
+void testFunction() {
+    std::vector<Item> input;
+
+    auto volume = libnest2d::Box(1000, 1000);
+
+    std::vector<Item> items;
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(5, 10),
+                                               Point(10, 10),
+                                               Point(0, 0)
+                                       }));
+    auto& long_thin_triangle = items.back();
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(0, 10),
+                                               Point(10, 10),
+                                               Point(10, 0),
+                                               Point(0, 0),
+                                       }));
+    auto& square = items.back();
+
+    items.emplace_back(libnest2d::Item({
+                                               Point(5, 10),
+                                               Point(10, 0),
+                                               Point(0, 0)
+                                       }));
+    auto& equilateral_triangle = items.back();
+
+    auto num_bins = libnest2d::nest(items, volume);
+    std::cout << "Number of bins used: " << num_bins << std::endl;
+}
+
 // Helper function to convert a Point to a JavaScript object
 emscripten::val pointToJSObject(const Point& point) {
     emscripten::val obj = emscripten::val::object();
@@ -254,6 +287,8 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
 
     // Main nest function
     function("nest", &nestWrapper);
+
+    function("testFunction", &testFunction);
 }
 
 #endif // LIBNEST2D_JS_H
