@@ -63,7 +63,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     unsigned length = jsArray["length"].as<unsigned>();
     vertices.reserve(length);
 
-    for (int i = static_cast<int>(length) - 1; i >= 0; --i) {
+    for (unsigned i = 0; i < length; i++) {
         emscripten::val jsPoint = jsArray[i];
         // Use property access instead of method calls for better compatibility
         long x = jsPoint["x"].as<long>();
