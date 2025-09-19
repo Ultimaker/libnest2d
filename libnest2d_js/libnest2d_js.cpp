@@ -105,7 +105,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
-ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin) {
+ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin, double scaleFactor) {
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     auto length = jsItems["length"].as<unsigned>();
@@ -119,7 +119,7 @@ ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin) {
     NestConfig<> cfg;
     cfg.placer_config.rotations = { 0 };
 
-    size_t result = nest(items, bin, 10, cfg);
+    size_t result = nest(items, bin, scaleFactor * 5, cfg);
 
     emscripten::val jsItemsResult = emscripten::val::array();
     // Copy results back to original JavaScript items
