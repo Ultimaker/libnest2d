@@ -116,7 +116,10 @@ ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin) {
         items.push_back(item);
     }
 
-    size_t result = nest(items, bin);
+    NestConfig<> cfg;
+    cfg.placer_config.rotations = { 0 };
+
+    size_t result = nest(items, bin, 10, cfg);
 
     emscripten::val jsItemsResult = emscripten::val::array();
     // Copy results back to original JavaScript items
@@ -234,11 +237,6 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
     class_<Degrees>("Degrees")
         .constructor<double>()
         .function("toRadians", &Degrees::toRadians);
-
-    // register_vector for JavaScript array conversion
-    register_vector<Item>("VectorItem");
-    register_vector<Point>("VectorPoint");
-    register_vector<double>("VectorDouble");
 
     // Main nest function
     function("nest", &nestWrapper);
