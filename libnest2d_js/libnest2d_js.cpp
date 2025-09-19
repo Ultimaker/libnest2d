@@ -63,7 +63,7 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
     unsigned length = jsArray["length"].as<unsigned>();
     vertices.reserve(length);
 
-    for (unsigned i = 0; i < length; i++) {
+    for (int i = static_cast<int>(length) - 1; i >= 0; --i) {
         emscripten::val jsPoint = jsArray[i];
         // Use property access instead of method calls for better compatibility
         long x = jsPoint["x"].as<long>();
@@ -211,35 +211,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
             PolygonImpl polygon;
             polygon.Contour = vertices;
-
-            // Check if we need to reverse the orientation
-            // For libnest2d with Clipper, we want the area to be positive
-            double area = sl::area(polygon);
-            std::cerr << "[DEBUG] Initial polygon area: " << area << std::endl;
-
-            if (area < 0) {
-                std::cerr << "[DEBUG] Area is negative, reversing vertex order" << std::endl;
-                std::reverse(vertices.begin(), vertices.end());
-                polygon.Contour = vertices;
-
-                // Verify the area is now positive
-                double newArea = sl::area(polygon);
-                std::cerr << "[DEBUG] Area after reversal: " << newArea << std::endl;
-
-                for (size_t i = 0; i < vertices.size(); ++i) {
-                    std::cerr << "[DEBUG] Fixed Vertex " << i << ": (" << getX(vertices[i]) << ", " << getY(vertices[i]) << ")" << std::endl;
-                }
-            } else {
-                std::cerr << "[DEBUG] Area is already positive, no reversal needed" << std::endl;
-            }
-
-            Item item(polygon);
-
-            std::cerr << "[DEBUG] Created item - area: " << item.area()
-                      << ", vertexCount: " << item.vertexCount()
-                      << ", binId: " << item.binId() << std::endl;
-
-            return item;
+            return Item(polygon);
         }))
         .function("binId", select_overload<int() const>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
