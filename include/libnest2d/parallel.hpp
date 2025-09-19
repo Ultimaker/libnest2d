@@ -14,7 +14,7 @@
 #endif
 
 namespace libnest2d { namespace __parallel {
-    
+
 template<class It> 
 using TIteratorValue = typename std::iterator_traits<It>::value_type;
 
@@ -55,6 +55,12 @@ inline void enumerate(
     }
 
     for(TN fi = 0; fi < N; ++fi) rets[fi].wait();
+#endif
+
+#ifdef __EMSCRIPTEN__
+    // For WASM/Emscripten builds, always use non-parallel execution
+    // due to limited threading support in WebAssembly
+    for(TN n = 0; n < N; n++) fn(*(from + n), n);
 #endif
 }
 
