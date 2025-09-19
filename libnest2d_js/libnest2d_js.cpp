@@ -9,10 +9,13 @@
 #include <emscripten/val.h>
 #include <libnest2d/backends/clipper/geometries.hpp>
 #include <libnest2d/placers/bottomleftplacer.hpp>
+#include <libnest2d/selections/firstfit.hpp>
+#include <iostream>
 
 using namespace emscripten;
 using namespace libnest2d;
 using namespace placers;
+using namespace selections;
 
 // Type aliases to match Python bindings
 using Point = PointImpl;
@@ -73,23 +76,66 @@ std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
 
 // Wrapper function for nest() to handle JavaScript arrays
 ResultAndItem nestWrapper(ItemList jsItems, const Box& bin) {
+    std::cerr << "[DEBUG] nestWrapper called" << std::endl;
+
     // Convert JavaScript array to std::vector<Item>
     std::vector<Item> items;
     auto length = jsItems["length"].as<unsigned>();
     items.reserve(length);
 
+    std::cerr << "[DEBUG] Processing " << length << " items" << std::endl;
+    std::cerr << "[DEBUG] Bin dimensions: " << bin.width() << "x" << bin.height() << std::endl;
+
     for (unsigned i = 0; i < length; i++) {
         Item item = jsItems[i].as<Item>();
         items.push_back(item);
+        std::cerr << "[DEBUG] Item " << i << " - area: " << item.area()
+                  << ", vertexCount: " << item.vertexCount()
+                  << ", binId: " << item.binId() << std::endl;
     }
 
-    size_t result = nest(items, bin);
+    std::cerr << "[DEBUG] Calling nest() function" << std::endl;
+
+    size_t result = 0;
+    try {
+        // Use the _Nester class directly with explicit strategies
+        using Placer = BottomLeftPlacer;
+        using Selector = FirstFitSelection;
+
+        std::cerr << "[DEBUG] Creating nester with BottomLeftPlacer and FirstFitSelection" << std::endl;
+        _Nester<Placer, Selector> nester(bin);
+
+        std::cerr << "[DEBUG] Executing nesting..." << std::endl;
+        result = nester.execute(items.begin(), items.end());
+
+        std::cerr << "[DEBUG] Nesting completed, result: " << result << std::endl;
+
+        // Get the pack result
+        auto& packResult = nester.lastResult();
+        std::cerr << "[DEBUG] Pack result has " << packResult.size() << " bins" << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Exception during nesting: " << e.what() << std::endl;
+        result = 0;
+    } catch (...) {
+        std::cerr << "[ERROR] Unknown exception during nesting" << std::endl;
+        result = 0;
+    }
+
+    std::cerr << "[DEBUG] nest() returned: " << result << std::endl;
+
+    // Check the state of items after nesting
+    for (size_t i = 0; i < items.size(); ++i) {
+        std::cerr << "[DEBUG] After nest - Item " << i << " binId: " << items[i].binId()
+                  << ", translation: (" << getX(items[i].translation()) << ", " << getY(items[i].translation()) << ")" << std::endl;
+    }
 
     // Copy results back to original JavaScript items
     for (size_t i = 0; i < items.size() && i < length; ++i) {
         jsItems.set(i, val(items[i]));
     }
 
+    std::cerr << "[DEBUG] Returning result: " << result << std::endl;
     return resultAndItems(result, jsItems);
 }
 
@@ -165,7 +211,35 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
             std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
             PolygonImpl polygon;
             polygon.Contour = vertices;
-            return Item(polygon);
+
+            // Check if we need to reverse the orientation
+            // For libnest2d with Clipper, we want the area to be positive
+            double area = sl::area(polygon);
+            std::cerr << "[DEBUG] Initial polygon area: " << area << std::endl;
+
+            if (area < 0) {
+                std::cerr << "[DEBUG] Area is negative, reversing vertex order" << std::endl;
+                std::reverse(vertices.begin(), vertices.end());
+                polygon.Contour = vertices;
+
+                // Verify the area is now positive
+                double newArea = sl::area(polygon);
+                std::cerr << "[DEBUG] Area after reversal: " << newArea << std::endl;
+
+                for (size_t i = 0; i < vertices.size(); ++i) {
+                    std::cerr << "[DEBUG] Fixed Vertex " << i << ": (" << getX(vertices[i]) << ", " << getY(vertices[i]) << ")" << std::endl;
+                }
+            } else {
+                std::cerr << "[DEBUG] Area is already positive, no reversal needed" << std::endl;
+            }
+
+            Item item(polygon);
+
+            std::cerr << "[DEBUG] Created item - area: " << item.area()
+                      << ", vertexCount: " << item.vertexCount()
+                      << ", binId: " << item.binId() << std::endl;
+
+            return item;
         }))
         .function("binId", select_overload<int() const>(&Item::binId))
         .function("setBinId", select_overload<void(int)>(&Item::binId))
@@ -196,7 +270,7 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .constructor<double>()
         .function("toDegrees", &Radians::toDegrees);
 
-    // Degrees class for rotation angles  
+    // Degrees class for rotation angles
     class_<Degrees>("Degrees")
         .constructor<double>()
         .function("toRadians", &Degrees::toRadians);
