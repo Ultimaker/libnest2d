@@ -55,6 +55,8 @@ target_link_options(libnest2d_js
         "SHELL:-l embind"
         "SHELL: --emit-tsd libnest2d_js.d.ts"
         "SHELL:-sWASM_BIGINT=1"
+        "SHELL:-sASSERTIONS=1"
+
 )
 
 # If you want to enable debug options, add them conditionally:
