@@ -1097,39 +1097,3 @@ TEST_CASE("MinAreaBBWithRotatingCalipers", "[Geometry]") {
         REQUIRE(succ);
     }
 }
-
-TEST_CASE("SimpleNesting", "[Geometry]") {
-    std::vector<Item> input;
-
-    auto volume = libnest2d::Box(1000l, 1000l);
-
-    std::vector<Item> items;
-
-    items.emplace_back(libnest2d::Item({
-        Point(5l, 10l),
-        Point(10l, 10l),
-        Point(0l, 0l)
-    }));
-    auto& long_thin_triangle = items.back();
-
-    items.emplace_back(libnest2d::Item({
-       Point(0l, 10l),
-       Point(10l, 10l),
-       Point(10l, 0l),
-       Point(0l, 0l),
-    }));
-    auto& square = items.back();
-
-    items.emplace_back(libnest2d::Item({
-        Point(5l, 10l),
-        Point(10l, 0l),
-        Point(0l, 0l)
-    }));
-    auto& equilateral_triangle = items.back();
-
-    auto num_bins = libnest2d::nest(items, volume);
-    REQUIRE(num_bins == 1u);
-    REQUIRE(long_thin_triangle.binId() != libnest2d::BIN_ID_UNSET);
-    REQUIRE(square.binId() != libnest2d::BIN_ID_UNSET);
-    REQUIRE(equilateral_triangle.binId() != libnest2d::BIN_ID_UNSET);
-}

@@ -161,15 +161,18 @@ class Nest2DConan(ConanFile):
         cmake.install()
 
     def deploy(self):
-        copy(self, "libnest2d_js*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
-        copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+        if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
+            copy(self, "libnest2d_js*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
+            copy(self, "*", src=os.path.join(self.package_folder, "bin"), dst=self.install_folder)
 
     def package(self):
-        copy(self, pattern="libnest2d_js*", src=os.path.join(self.build_folder, "libnest2d_js"),
-             dst=os.path.join(self.package_folder, "bin"))
-        copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
-        copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
-        copy(self, f"*.wasm", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+
+        if self.settings.os == "Emscripten" or self.options.get_safe("with_js_bindings", False):
+            copy(self, pattern="libnest2d_js*", src=os.path.join(self.build_folder, "libnest2d_js"),
+                 dst=os.path.join(self.package_folder, "bin"))
+            copy(self, f"*.d.ts", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+            copy(self, f"*.js", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
+            copy(self, f"*.wasm", src=self.build_folder, dst=os.path.join(self.package_folder, "bin"), keep_path = False)
         packager = AutoPackager(self)
         packager.run()
 
