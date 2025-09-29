@@ -32,44 +32,11 @@ EMSCRIPTEN_DECLARE_VAL_TYPE(ItemList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(DoubleList);
 EMSCRIPTEN_DECLARE_VAL_TYPE(ResultAndItem);
 
-
-// Helper function to convert a Point to a JavaScript object
-emscripten::val pointToJSObject(const Point& point) {
-    emscripten::val obj = emscripten::val::object();
-    obj.set("x", long{ static_cast<long>(getX(point)) } );
-    obj.set("y", long{ static_cast<long>(getY(point)) } );
-    return obj;
-}
-
 ResultAndItem resultAndItems(const size_t result, const ItemList& items) {
     emscripten::val obj = emscripten::val::object();
     obj.set("result", result);
     obj.set("items", items);
     return ResultAndItem { obj };
-}
-// Helper function to convert a vector of Points to a JavaScript array
-emscripten::val pointVectorToJSArray(const std::vector<Point>& points) {
-    emscripten::val jsArray = emscripten::val::array();
-    for (size_t i = 0; i < points.size(); ++i) {
-        jsArray.set(i, pointToJSObject(points[i]));
-    }
-    return jsArray;
-}
-// Helper function to convert JavaScript arrays to std::vector<Point>
-std::vector<Point> jsArrayToPointVector(const emscripten::val& jsArray) {
-    std::vector<Point> vertices;
-    unsigned length = jsArray["length"].as<unsigned>();
-    vertices.reserve(length);
-
-    for (unsigned i = 0; i < length; i++) {
-        emscripten::val jsPoint = jsArray[i];
-        // Use property access instead of method calls for better compatibility
-        long x = jsPoint["x"].as<long>();
-        long y = jsPoint["y"].as<long>();
-        vertices.emplace_back(x, y);
-    }
-
-    return vertices;
 }
 
 // Wrapper function for nest() to handle JavaScript arrays
@@ -162,14 +129,12 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .field("parallel", &NfpConfig::parallel)
         ;
 
-
     // Item class
     class_<Item>("Item")
         .constructor<const PolygonImpl&>()
-        .class_function("createFromVertices", optional_override([](const emscripten::val& jsVertices) -> Item {
-            std::vector<Point> vertices = jsArrayToPointVector(jsVertices);
+        .class_function("createFromVertices", optional_override([](const PointList& vertices) -> Item {
             PolygonImpl polygon;
-            polygon.Contour = vertices;
+            polygon.Contour = emscripten::vecFromJSArray<Point>(vertices);
             return Item(polygon);
         }))
         .function("binId", select_overload<int() const>(&Item::binId))
@@ -189,7 +154,11 @@ EMSCRIPTEN_BINDINGS(libnest2d_js) {
         .function("setPriority", select_overload<void(int)>(&Item::priority))
         .function("transformedShape", optional_override([](const Item& self) {
             const auto& poly = self.transformedShape();
-            return pointVectorToJSArray(poly.Contour);
+            emscripten::val shape = emscripten::val::array();
+            for (const auto& point : poly.Contour) {
+                shape.call<void>("push", point);
+            }
+            return PointList { shape };
         }));
 
 
