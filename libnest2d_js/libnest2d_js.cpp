@@ -54,7 +54,7 @@ ResultAndItem nestWrapper(const ItemList& jsItems, const Box& bin, double scaleF
     NestConfig<> cfg;
     cfg.placer_config.rotations = { 0 };
 
-    size_t result = nest(items, bin, scaleFactor * 5, cfg);
+    size_t result = nest(items, bin, scaleFactor, cfg);
 
     emscripten::val jsItemsResult = emscripten::val::array();
     // Copy results back to original JavaScript items
