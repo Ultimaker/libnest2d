@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 cmake_policy(SET CMP0091 NEW)
 project(libnest2d)
 find_package(standardprojectsettings REQUIRED)
+find_package(spdlog REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build shared libs instead of static (applies for dependencies as well)" OFF)
 option(HEADER_ONLY "If enabled static library will not be built." ON)
 option(ENABLE_TESTING "Build with Google unittest" OFF)
+option(WITH_JS_BINDINGS "Build JS/WASM bindings for npm package" OFF)
 set(GEOMETRIES clipper CACHE STRING "Geometry backend, available options: 'clipper' (default), 'boost'")
 set(OPTIMIZER nlopt CACHE STRING "Optimization backend, available options: 'nlopt' (default), 'optimlib'")
 set(THREADING std CACHE STRING "Multithreading, available options: 'std' (default), 'tbb', 'omp', 'none'")
@@ -54,7 +56,7 @@ target_compile_definitions(project_options INTERFACE LIBNEST2D_GEOMETRIES_${GEOM
 
 if("${OPTIMIZER}" STREQUAL "nlopt")
     find_package(NLopt REQUIRED)
-    target_link_libraries(project_options INTERFACE NLopt::nlopt)
+    target_link_libraries(project_options INTERFACE NLopt::nlopt spdlog::spdlog)
     list(APPEND nest2d_HDRS
             include/libnest2d/optimizers/nlopt/simplex.hpp
             include/libnest2d/optimizers/nlopt/subplex.hpp
@@ -89,17 +91,22 @@ endif()
 target_compile_definitions(project_options INTERFACE LIBNEST2D_THREADING_${THREADING})
 
 set(libnest2d_SRCS
-        src/libnest2d.cpp
-        )
+    src/libnest2d.cpp
+)
+
+if(WITH_JS_BINDINGS OR EMSCRIPTEN)
+    add_subdirectory(libnest2d_js)
+endif()
+
 
 if(HEADER_ONLY)
     add_library(nest2d INTERFACE ${libnest2d_HDRS})
     target_link_libraries(nest2d INTERFACE project_options)
     target_include_directories(nest2d
-            INTERFACE
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            )
+        INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
 else()
     if(BUILD_SHARED_LIBS)
         add_library(nest2d SHARED ${libnest2d_SRCS} ${libnest2d_HDRS})
@@ -111,12 +118,12 @@ else()
     endif()
     target_link_libraries(nest2d PUBLIC project_options)
     target_include_directories(nest2d
-            PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-                $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-            PRIVATE
-                $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-            )
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        PRIVATE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
 endif()
 
 if(ENABLE_TESTING)
