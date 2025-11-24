@@ -95,7 +95,7 @@ class Nest2DConan(ConanFile):
         if self.options.geometries == "boost" or self.options.geometries == "clipper":
             self.requires("boost/1.86.0", transitive_headers=True)
         if self.options.optimizer == "nlopt":
-            self.requires("nlopt/2.7.1", transitive_headers=True)
+            self.requires("nlopt/2.10.0", transitive_headers=True)
         if self.options.optimizer == "optimlib":
             self.requires("armadillo/12.6.4", transitive_headers=True)
         if self.options.threading == "tbb":
